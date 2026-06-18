@@ -2,79 +2,93 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Compass, GalleryHorizontalEnd, Zap, PanelLeftClose, ChevronRight,PanelLeftOpen, Plus } from "lucide-react";
-import { usePathname } from "next/navigation";
+import {
+  Compass,
+  GalleryHorizontalEnd,
+  Zap,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  ChevronRight,
+  SlidersHorizontal,
+  Clock,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { SignInButton, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
+import { useLibraryHistory } from "@/hooks/useLibraryHistory";
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)";
-const PRIMARY_LIGHT = "oklch(0.5161 0.0817 211.9 / 0.12)";
-const PRIMARY_BORDER = "oklch(0.5161 0.0817 211.9 / 0.5)";
+const PRIMARY_HEX = "#3d8a96";
 
 const MenuOptions = [
   { title: "New", icon: Plus, path: "/" },
   { title: "Discover", icon: Compass, path: "/discover" },
   { title: "Library", icon: GalleryHorizontalEnd, path: "/library" },
-  // ❌ Removed "Sign in" as a nav item — handled in footer now
 ];
 
 export default function AppSidebar() {
   const path = usePathname();
+  const router = useRouter();
   const { user, isLoaded } = useUser();
   const [open, setOpen] = useState(true);
-  const [showUpgrade, setShowUpgrade] = useState(true);
   const isPro = user?.publicMetadata?.plan === "pro";
+  const { history, loading } = useLibraryHistory();
 
   if (!isLoaded) return null;
 
   return (
     <>
+      {/* Collapsed toggle */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
           aria-label="Open sidebar"
-          style={{ color: PRIMARY, borderColor: PRIMARY_BORDER, backgroundColor: "#f0eeeb" }}
-          className="fixed top-4 left-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border transition-opacity hover:opacity-80"
+          className="fixed top-4 left-4 z-50 flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-500 shadow-sm transition hover:text-neutral-800"
         >
-          <PanelLeftOpen size={16} strokeWidth={1.5} />
+          <PanelLeftOpen size={15} strokeWidth={1.5} />
         </button>
       )}
 
+      {/* Mobile overlay */}
       {open && (
-        <div onClick={() => setOpen(false)} className="fixed inset-0 z-30 bg-black/70 sm:hidden" aria-hidden="true" />
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 sm:hidden"
+          aria-hidden="true"
+        />
       )}
 
+      {/* Sidebar */}
       <aside
-        style={{ fontFamily: "'Geist', 'Helvetica Neue', sans-serif", backgroundColor: "#f0eeeb" }}
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-neutral-200 transition-[width] duration-300 ease-in-out ${open ? "w-[230px]" : "w-0 overflow-hidden"}`}
+        style={{ fontFamily: "'Geist', 'Helvetica Neue', sans-serif" }}
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-[#f7f7f5] border-r border-neutral-200/80 transition-[width] duration-300 ease-in-out ${
+          open ? "w-[240px]" : "w-0 overflow-hidden"
+        }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-5 pb-4">
+
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-4 pt-5 pb-3">
           <Link href="/" className="flex items-center">
-            <Image src="/Perplexity_AI_logo.svg" alt="Perplexity" width={112} height={28} style={{ height: 'auto' }} />
+            <Image
+              src="/Perplexity_AI_logo.svg"
+              alt="Perplexity"
+              width={108}
+              height={26}
+              style={{ height: "auto" }}
+            />
           </Link>
-          <button onClick={() => setOpen(false)} aria-label="Close sidebar" className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-500 transition-colors hover:text-neutral-800">
-            <PanelLeftClose size={15} strokeWidth={1.5} />
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close sidebar"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-200/60 hover:text-neutral-700 transition-colors"
+          >
+            <PanelLeftClose size={14} strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className="mx-4 border-t border-neutral-300 mb-4" />
-
-        {/* New Thread */}
-        {/* <div className="px-4 pt-4 pb-2">
-          <button
-            style={{ borderColor: PRIMARY_BORDER, color: PRIMARY, backgroundColor: "#f0eeeb" }}
-            className="flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-70"
-          >
-            <Plus size={14} strokeWidth={2.5} />
-            New thread
-          </button>
-        </div> */}
-
-        {/* <p className="px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Menu</p> */}
-
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 space-y-1">
+        {/* ── Nav ── */}
+        <nav className="px-2 pt-1 space-y-0.5">
           {MenuOptions.map((menu) => {
             const Icon = menu.icon;
             const active = path === menu.path;
@@ -82,69 +96,172 @@ export default function AppSidebar() {
               <Link
                 key={menu.path}
                 href={menu.path}
-                style={active ? { backgroundColor: PRIMARY, color: "#fff" } : {}}
-                className={`flex items-center gap-3 rounded-full px-4 py-2.5 text-[15px] transition-all ${active ? "font-semibold shadow-sm" : "font-normal text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200/50"}`}
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] transition-all ${
+                  active
+                    ? "bg-white text-neutral-900 font-medium shadow-sm border border-neutral-200/80"
+                    : "text-neutral-500 hover:bg-white/70 hover:text-neutral-800"
+                }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.2 : 1.6} className="shrink-0" />
+                <Icon
+                  size={15}
+                  strokeWidth={active ? 2 : 1.6}
+                  style={active ? { color: PRIMARY_HEX } : {}}
+                  className="shrink-0"
+                />
                 {menu.title}
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer */}
-      
-<div className="px-3 pb-5 pt-2 space-y-3">
- 
+        {/* ── Divider ── */}
+        <div className="mx-3 mt-3 mb-2 border-t border-neutral-200/80" />
 
-  {/* Premium card — only for free users */}
- {user && !isPro && (
-  <button
-    onClick={() => router.push("/upgrade")}
-    className="flex w-full items-center gap-2.5 rounded-xl border border-neutral-200 bg-white px-3 py-2.5 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
-  >
-    <div
-      style={{ backgroundColor: PRIMARY }}
-      className="flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0"
-    >
-      <Zap size={13} className="text-white" />
-    </div>
-    <div className="flex-1 text-left">
-      <p className="text-[12px] font-semibold text-neutral-800">Upgrade to Pro</p>
-      <p className="text-[10px] text-neutral-400">More searches, smarter AI</p>
-    </div>
-    <ChevronRight size={14} className="text-neutral-300 flex-shrink-0" />
-  </button>
-)}
- <div className="border-t border-neutral-200" />
-  {/* User row */}
-  {user ? (
-    <div className="flex items-center gap-2.5 px-1">
-      <UserButton appearance={{ elements: { avatarBox: "h-7 w-7" } }} />
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-medium text-neutral-800 truncate">{user.firstName}</p>
-        <p className="text-[10px] text-neutral-400">Free plan</p>
-      </div>
-      <SignOutButton>
-        <button className="text-[11px] text-neutral-400 hover:text-neutral-700 transition-colors">
-          Log out
-        </button>
-      </SignOutButton>
-    </div>
-  ) : (
-    <SignInButton mode="modal" appearance={clerkAppearance}>
-      <button
-        style={{ backgroundColor: PRIMARY }}
-        className="w-full rounded-full px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-80 transition-opacity"
-      >
-        Sign in
-      </button>
-    </SignInButton>
-  )}
-</div>
+        {/* ── Recents ── */}
+        <div className="flex-1 overflow-hidden flex flex-col px-2">
+          {/* Section header */}
+          <div className="flex items-center justify-between px-1 mb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+              Recents
+            </span>
+            <button
+              onClick={() => router.push("/library")}
+              title="View all"
+              className="text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              <SlidersHorizontal size={12} />
+            </button>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5
+            [&::-webkit-scrollbar]:w-[3px]
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:bg-neutral-300
+            [&::-webkit-scrollbar-thumb]:rounded-full"
+          >
+            {/* Skeletons */}
+            {loading && (
+              <div className="space-y-1 pt-1">
+                {[80, 60, 72, 55, 68].map((w, i) => (
+                  <div
+                    key={i}
+                    className="h-3.5 rounded-md bg-neutral-200/70 animate-pulse mx-1"
+                    style={{ width: `${w}%` }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Empty */}
+            {!loading && history.length === 0 && (
+              <p className="text-[12px] text-neutral-400 px-1 pt-1">
+                No searches yet
+              </p>
+            )}
+
+            {/* Items */}
+            {!loading &&
+              history.map((item) => {
+                const active = path === `/search/${item.libId}`;
+                return (
+                  <button
+                    key={item.id ?? item.libId}
+                    onClick={() => router.push("/search/" + item.libId)}
+                    className={`w-full group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors ${
+                      active
+                        ? "bg-white border border-neutral-200/80 shadow-sm"
+                        : "hover:bg-white/70"
+                    }`}
+                  >
+                    <Clock
+                      size={11}
+                      className="shrink-0 text-neutral-300 group-hover:text-neutral-400 transition-colors"
+                    />
+                    <span
+                      className={`text-[12.5px] truncate transition-colors ${
+                        active
+                          ? "text-neutral-800 font-medium"
+                          : "text-neutral-500 group-hover:text-neutral-700"
+                      }`}
+                    >
+                      {item.searchInput}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-2 pb-4 pt-3 space-y-2 border-t border-neutral-200/80 mt-2">
+
+          {/* Upgrade card — free users only */}
+          {user && !isPro && (
+            <button
+              onClick={() => router.push("/upgrade")}
+              className="flex w-full items-center gap-2.5 rounded-xl bg-white border border-neutral-200 px-3 py-2.5 transition-all hover:border-neutral-300 hover:shadow-sm group"
+            >
+              <div
+                style={{ backgroundColor: PRIMARY_HEX }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+              >
+                <Zap size={13} className="text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-[12px] font-semibold text-neutral-800">
+                  Upgrade to Pro
+                </p>
+                <p className="text-[10px] text-neutral-400">
+                  More searches, smarter AI
+                </p>
+              </div>
+              <ChevronRight
+                size={13}
+                className="text-neutral-300 group-hover:text-neutral-400 transition-colors shrink-0"
+              />
+            </button>
+          )}
+
+          {/* User row */}
+          {user ? (
+            <div className="flex items-center gap-2.5 px-1 py-1">
+              <UserButton
+                appearance={{ elements: { avatarBox: "h-7 w-7" } }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-medium text-neutral-800 truncate">
+                  {user.firstName}
+                </p>
+                <p className="text-[10px] text-neutral-400">
+                  {isPro ? "Pro plan" : "Free plan"}
+                </p>
+              </div>
+              <SignOutButton>
+                <button className="text-[11px] text-neutral-400 hover:text-neutral-700 transition-colors">
+                  Log out
+                </button>
+              </SignOutButton>
+            </div>
+          ) : (
+            <SignInButton mode="modal" appearance={clerkAppearance}>
+              <button
+                style={{ backgroundColor: PRIMARY_HEX }}
+                className="w-full rounded-lg px-3 py-2 text-[12.5px] font-medium text-white hover:opacity-85 transition-opacity"
+              >
+                Sign in
+              </button>
+            </SignInButton>
+          )}
+        </div>
       </aside>
 
-      <div className={`transition-[margin] duration-300 ease-in-out ${open ? "ml-[230px]" : "ml-0"}`} />
+      {/* Content offset */}
+      <div
+        className={`transition-[margin] duration-300 ease-in-out ${
+          open ? "ml-[240px]" : "ml-0"
+        }`}
+      />
     </>
   );
 }
