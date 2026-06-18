@@ -16,7 +16,8 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { SignInButton, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
-import { useLibraryHistory } from "@/hooks/useLibraryHistory";
+import { useLibraryHistory } from "../context/LibraryContext";
+
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)";
 const PRIMARY_HEX = "#3d8a96";

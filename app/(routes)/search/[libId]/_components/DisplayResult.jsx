@@ -18,6 +18,7 @@ import LoadingSteps from "./LoadingSteps"
 import { useModelStore } from "@/lib/stores/modelStore"
 import { useSearchStore } from "@/lib/stores/searchStore"
 import { ModelSelect } from "@/app/_components/ModelSelect"
+import { useLibraryHistory } from "@/app/context/LibraryContext"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -288,6 +289,8 @@ function DisplayResult() {
     streamFrameRef.current = requestAnimationFrame(flushStreamText)
   }, [flushStreamText])
 
+const { refresh } = useLibraryHistory();
+
   useEffect(() => () => {
     if (streamFrameRef.current) cancelAnimationFrame(streamFrameRef.current)
   }, [])
@@ -470,7 +473,7 @@ function DisplayResult() {
     ]).then(([{ error: chatErr }, { error: libErr }]) => {
       if (chatErr) console.warn("Chats save skipped:", describeSaveError(chatErr))
       if (libErr) console.warn("Library save skipped:", describeSaveError(libErr))
-      if (!libErr) libraryInserted.current = true
+      if (!libErr) {libraryInserted.current = true;refresh();}
       if (!chatErr) clearLocalChats(libId)
     }).catch((err) => console.warn("Background save skipped:", describeSaveError(err)))
   }, [addEmptyResponseToast, addRateLimitToast, libId, queueStreamText, selectedModelId, user])

@@ -5,6 +5,8 @@ import AppSidebar from "./_components/AppSidebar";
 import { ClerkProvider } from "@clerk/nextjs";
 import Provider from "./provider";
 import { clerkAppearance } from "@/lib/clerk-appearance";
+import { LibraryProvider } from "./context/LibraryContext";
+
 
 
 const geistSans = Geist({
@@ -29,17 +31,23 @@ export default function RootLayout({ children }) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-       
+
           <SidebarProvider defaultOpen={true}>
-            <AppSidebar />
+             <LibraryProvider>
+
+                    <AppSidebar />
 
             {/* Wrapper so the trigger + page content stack vertically */}
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-           
+
               <Provider >
-                {children}
+               
+                  {children}
+                
               </Provider>
             </div>
+             </LibraryProvider>
+        
           </SidebarProvider>
         </body>
       </html>
