@@ -19,6 +19,8 @@ import { useModelStore } from "@/lib/stores/modelStore"
 import { useSearchStore } from "@/lib/stores/searchStore"
 import { ModelSelect } from "@/app/_components/ModelSelect"
 import { useLibraryHistory } from "@/app/context/LibraryContext"
+import { useUsage } from "@/app/context/UsageContext"
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -248,14 +250,14 @@ function DisplayResult() {
   const { user }                              = useUser()
   const { selectedModelId }                   = useModelStore()
   const { pendingSearch, clearPendingSearch, setCurrentQuery } = useSearchStore()
-
+  const { usage, refreshUsage } = useUsage()
   const [chats, setChats]         = useState([])
   const [toasts, setToasts]       = useState([])
   const [streamingState, setStreamingState] = useState({
     chatIndex: null, rawText: "", isStreaming: false, isLoadingSearch: false,
   })
   const [userInput, setUserInput] = useState("")
-
+  
   const startedQueries     = useRef(new Set())
   const activeSearches     = useRef(new Set())
   const libraryInserted    = useRef(false)
@@ -403,6 +405,7 @@ const { refresh } = useLibraryHistory();
       ))
       setStreamingState({ chatIndex: null, rawText: "", isStreaming: false, isLoadingSearch: false })
       finishSearch()
+      refreshUsage()
     }
 
     let fullText = ""
@@ -459,6 +462,7 @@ const { refresh } = useLibraryHistory();
     })
     setStreamingState({ chatIndex: null, rawText: "", isStreaming: false, isLoadingSearch: false })
     finishSearch()
+    refreshUsage()
 
     Promise.all([
       saveChatIfMissing(insertPayload),

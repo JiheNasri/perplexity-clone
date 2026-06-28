@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Provider from "./provider";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { LibraryProvider } from "./context/LibraryContext";
+import { UsageProvider } from "./context/UsageContext";
 
 
 
@@ -31,24 +32,26 @@ export default function RootLayout({ children }) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <UsageProvider>
+            <SidebarProvider defaultOpen={true}>
+              <LibraryProvider>
 
-          <SidebarProvider defaultOpen={true}>
-             <LibraryProvider>
+                <AppSidebar />
 
-                    <AppSidebar />
+                {/* Wrapper so the trigger + page content stack vertically */}
+                <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-            {/* Wrapper so the trigger + page content stack vertically */}
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+                  <Provider >
 
-              <Provider >
-               
-                  {children}
-                
-              </Provider>
-            </div>
-             </LibraryProvider>
-        
-          </SidebarProvider>
+                    {children}
+
+                  </Provider>
+                </div>
+              </LibraryProvider>
+
+            </SidebarProvider>
+          </UsageProvider>
+
         </body>
       </html>
     </ClerkProvider>

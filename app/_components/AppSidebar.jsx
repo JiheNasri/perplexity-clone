@@ -22,6 +22,7 @@ import {
 } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { useLibraryHistory } from "../context/LibraryContext";
+import { useUsage } from "../context/UsageContext";
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)";
 const PRIMARY_HEX = "#3d8a96";
@@ -38,15 +39,9 @@ export default function AppSidebar() {
   const { user, isLoaded } = useUser();
   const [open, setOpen] = useState(true);
   const { history, loading } = useLibraryHistory();
-  const [usage, setUsage] = useState(null);
+  const { usage } = useUsage()
   const isPro = usage?.plan === "pro";
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/usage/me")
-      .then((r) => r.json())
-      .then(setUsage)
-      .catch(() => {});
-  }, [user]);
+
 
   if (!isLoaded) return null;
 

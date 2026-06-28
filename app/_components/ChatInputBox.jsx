@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import React, { useEffect, useState, useTransition } from "react"
+import React, { useState, useTransition } from "react"
 import { AudioLines, ArrowRight, Paperclip, Mic } from "lucide-react"
 import { v4 as uuidv4 } from "uuid"
 import { useRouter } from "next/navigation"
@@ -9,15 +9,9 @@ import { useSearchStore } from "@/lib/stores/searchStore"
 import { TaskPicker } from "./TaskPicker"
 import { ModelSelect } from "./ModelSelect"
 import { UsageBadge } from "./UsageBadge"
-
+import { useUsage } from "../context/UsageContext"
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)"
-
-// const MOCK_USAGE = {
-//   searches:   { used: 18, limit: 25 },
-//   research:   { used: 3,  limit: 5  },
-//   resetsInMs: 20_520_000,
-// }
 
 const searchTypeMap = {
   SEARCH: "search", RESEARCH: "research",
@@ -69,7 +63,7 @@ function ChatInputBox() {
   const [userSearchInput, setUserSearchInput] = useState("")
   const [activeTask, setActiveTask]           = useState("SEARCH")
   const [loading, setLoading]                 = useState(false)
-  const [usage, setUsage] = useState(null)
+ const { usage } = useUsage()
   const router               = useRouter()
   const [, startTransition]  = useTransition()
   const { setPendingSearch } = useSearchStore()
@@ -89,9 +83,6 @@ function ChatInputBox() {
 
   const hasInput = userSearchInput.trim().length > 0
 
-  useEffect(() => {
-  fetch("/api/usage/me").then(r => r.json()).then(setUsage)
-}, [])
 
   return (
     <div className="flex flex-col items-center min-h-screen justify-center px-3 sm:px-4">
