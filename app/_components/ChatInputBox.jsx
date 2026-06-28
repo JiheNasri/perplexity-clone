@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import React, { useState, useTransition } from "react"
+import React, { useEffect, useState, useTransition } from "react"
 import { AudioLines, ArrowRight, Paperclip, Mic } from "lucide-react"
 import { v4 as uuidv4 } from "uuid"
 import { useRouter } from "next/navigation"
@@ -13,11 +13,11 @@ import { UsageBadge } from "./UsageBadge"
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)"
 
-const MOCK_USAGE = {
-  searches:   { used: 18, limit: 25 },
-  research:   { used: 3,  limit: 5  },
-  resetsInMs: 20_520_000,
-}
+// const MOCK_USAGE = {
+//   searches:   { used: 18, limit: 25 },
+//   research:   { used: 3,  limit: 5  },
+//   resetsInMs: 20_520_000,
+// }
 
 const searchTypeMap = {
   SEARCH: "search", RESEARCH: "research",
@@ -69,7 +69,7 @@ function ChatInputBox() {
   const [userSearchInput, setUserSearchInput] = useState("")
   const [activeTask, setActiveTask]           = useState("SEARCH")
   const [loading, setLoading]                 = useState(false)
-
+  const [usage, setUsage] = useState(null)
   const router               = useRouter()
   const [, startTransition]  = useTransition()
   const { setPendingSearch } = useSearchStore()
@@ -88,6 +88,10 @@ function ChatInputBox() {
   }
 
   const hasInput = userSearchInput.trim().length > 0
+
+  useEffect(() => {
+  fetch("/api/usage/me").then(r => r.json()).then(setUsage)
+}, [])
 
   return (
     <div className="flex flex-col items-center min-h-screen justify-center px-3 sm:px-4">
@@ -121,7 +125,7 @@ function ChatInputBox() {
             <ModelSelect activeTask={activeTask} />
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
-            <UsageBadge usage={MOCK_USAGE} />
+            <UsageBadge usage={usage} />
             <div className="w-px h-4 bg-gray-200 mx-1.5 shrink-0" aria-hidden />
             <IconBtn label="Attach file"><Paperclip className="h-4 w-4" /></IconBtn>
             <IconBtn label="Voice input"><Mic className="h-4 w-4" /></IconBtn>
@@ -137,7 +141,7 @@ function ChatInputBox() {
             <ModelSelect activeTask={activeTask} mobileCompact />
           </div>
           <div className="flex items-center justify-between">
-            <UsageBadge usage={MOCK_USAGE} mobileCompact />
+            <UsageBadge usage={usage} mobileCompact />
             <div className="flex items-center gap-1">
               <IconBtn label="Attach file"><Paperclip className="h-4 w-4" /></IconBtn>
               <IconBtn label="Voice input"><Mic className="h-4 w-4" /></IconBtn>

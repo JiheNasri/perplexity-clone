@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,10 +14,14 @@ import {
   Clock,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { SignInButton, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
+import {
+  SignInButton,
+  SignOutButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { useLibraryHistory } from "../context/LibraryContext";
-
 
 const PRIMARY = "oklch(0.5161 0.0817 211.9)";
 const PRIMARY_HEX = "#3d8a96";
@@ -33,8 +37,16 @@ export default function AppSidebar() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const [open, setOpen] = useState(true);
-  const isPro = user?.publicMetadata?.plan === "pro";
   const { history, loading } = useLibraryHistory();
+  const [usage, setUsage] = useState(null);
+  const isPro = usage?.plan === "pro";
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/usage/me")
+      .then((r) => r.json())
+      .then(setUsage)
+      .catch(() => {});
+  }, [user]);
 
   if (!isLoaded) return null;
 
@@ -67,7 +79,6 @@ export default function AppSidebar() {
           open ? "w-[240px]" : "w-0 overflow-hidden"
         }`}
       >
-
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
           <Link href="/" className="flex items-center">
@@ -135,7 +146,8 @@ export default function AppSidebar() {
           </div>
 
           {/* List */}
-          <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5
+          <div
+            className="flex-1 overflow-y-auto space-y-0.5 pr-0.5
             [&::-webkit-scrollbar]:w-[3px]
             [&::-webkit-scrollbar-track]:bg-transparent
             [&::-webkit-scrollbar-thumb]:bg-neutral-300
@@ -196,7 +208,6 @@ export default function AppSidebar() {
 
         {/* ── Footer ── */}
         <div className="px-2 pb-4 pt-3 space-y-2 border-t border-neutral-200/80 mt-2">
-
           {/* Upgrade card — free users only */}
           {user && !isPro && (
             <button
@@ -227,9 +238,7 @@ export default function AppSidebar() {
           {/* User row */}
           {user ? (
             <div className="flex items-center gap-2.5 px-1 py-1">
-              <UserButton
-                appearance={{ elements: { avatarBox: "h-7 w-7" } }}
-              />
+              <UserButton appearance={{ elements: { avatarBox: "h-7 w-7" } }} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium text-neutral-800 truncate">
                   {user.firstName}

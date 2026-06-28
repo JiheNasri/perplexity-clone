@@ -1,8 +1,10 @@
+import { auth } from "@clerk/nextjs/server"
 import { streamCompletion } from "@/lib/ai/gateway"
+import { checkQuota } from "@/lib/quota/checkQuota"
+import { getUserPlan } from "@/lib/quota/getUserPlan"
 
 export const runtime = "edge"
 
-// Trim search results to reduce input tokens
 function compactResults(results = []) {
   return results
     .slice(0, 5)
@@ -35,11 +37,29 @@ ${compactResults(searchResult)}`
 }
 
 export async function POST(req) {
+  const { userId } = await auth()
+  if (!userId) {
+    return new Response("⚠️ Unauthorized.", { status: 401 })
+  }
+
+  const plan = await getUserPlan(userId)
+  const quota = await checkQuota(userId, plan, "searches")
+
+  if (!quota.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: "rate_limit_exceeded",
+        message: `You've used ${quota.used}/${quota.limit} searches today. Upgrade to Pro for more.`,
+      }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
   const {
     searchInput,
     searchResult,
-    modelId,   // e.g. "claude-sonnet-4"  — sent from the frontend
-    intent,    // e.g. "quality" | "speed" | "cost" — optional smart routing
+    modelId,
+    intent,
   } = await req.json()
 
   if (!searchInput?.trim()) {
@@ -57,6 +77,8 @@ export async function POST(req) {
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "no-cache",
         "X-Accel-Buffering": "no",
+        "X-Usage-Used": String(quota.used),
+        "X-Usage-Limit": String(quota.limit),
       },
     })
   } catch (err) {
