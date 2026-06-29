@@ -31,6 +31,7 @@ export async function GET() {
     plan,
     searches: { used: isToday ? usage.search_count : 0, limit: limits.searches },
     research: { used: isToday ? usage.research_count : 0, limit: limits.research },
+   tokens:   { used: isToday ? usage.tokens_used : 0, limit: limits.dailyTokens },
     resetsInMs: msUntilNextMidnightUTC(),
   })
 }

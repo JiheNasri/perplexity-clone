@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
+import { after } from "next/server"
 import { streamCompletion } from "@/lib/ai/gateway"
-import { checkQuota } from "@/lib/quota/checkQuota"
+import { checkQuota, checkTokenBudget, recordTokenUsage } from "@/lib/quota/checkQuota"
 import { getUserPlan } from "@/lib/quota/getUserPlan"
 
 export const runtime = "edge"
@@ -55,6 +56,17 @@ export async function POST(req) {
     )
   }
 
+  const tokenCheck = await checkTokenBudget(userId, plan)
+  if (!tokenCheck.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: "rate_limit_exceeded",
+        message: `Daily usage limit reached (${tokenCheck.used}/${tokenCheck.limit} tokens). Upgrade to Pro for more.`,
+      }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
   const {
     searchInput,
     searchResult,
@@ -69,7 +81,18 @@ export async function POST(req) {
   const prompt = buildPrompt(searchInput, searchResult ?? [])
 
   try {
-    const stream = await streamCompletion(prompt, modelId, intent)
+    let capturedUsage = null
+
+    const stream = await streamCompletion(prompt, modelId, intent, (usage) => {
+      capturedUsage = usage
+    })
+
+    after(() => {
+      console.log("capturedUsage:", capturedUsage)
+      if (capturedUsage?.total_tokens) {
+        recordTokenUsage(userId, capturedUsage.total_tokens)
+      }
+    })
 
     return new Response(stream, {
       headers: {
