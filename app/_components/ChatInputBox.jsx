@@ -1,23 +1,29 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import React, { useState, useTransition } from "react"
-import { AudioLines, ArrowRight, Paperclip, Mic } from "lucide-react"
-import { v4 as uuidv4 } from "uuid"
-import { useRouter } from "next/navigation"
-import { useSearchStore } from "@/lib/stores/searchStore"
-import { TaskPicker } from "./TaskPicker"
-import { ModelSelect } from "./ModelSelect"
-import { UsageBadge } from "./UsageBadge"
-import { useUsage } from "../context/UsageContext"
+import Image from "next/image";
+import React, { useState, useTransition } from "react";
+import { AudioLines, ArrowRight, Paperclip, Mic } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import { useRouter } from "next/navigation";
+import { useSearchStore } from "@/lib/stores/searchStore";
+import { TaskPicker } from "./TaskPicker";
+import { ModelSelect } from "./ModelSelect";
+import { UsageBadge } from "./UsageBadge";
+import { useUsage } from "../context/UsageContext";
+import { useTokenWarning } from "@/hooks/useTokenWarning";
 
-const PRIMARY = "oklch(0.5161 0.0817 211.9)"
+const PRIMARY = "oklch(0.5161 0.0817 211.9)";
 
 const searchTypeMap = {
-  SEARCH: "search", RESEARCH: "research",
-  WRITING: "search", CODE: "search", TRANSLATE: "search",
-  SUMMARIZE: "search", ANALYZE: "search", CALCULATE: "search",
-}
+  SEARCH: "search",
+  RESEARCH: "research",
+  WRITING: "search",
+  CODE: "search",
+  TRANSLATE: "search",
+  SUMMARIZE: "search",
+  ANALYZE: "search",
+  CALCULATE: "search",
+};
 
 function IconBtn({ onClick, label, children, className = "" }) {
   return (
@@ -35,7 +41,7 @@ function IconBtn({ onClick, label, children, className = "" }) {
     >
       {children}
     </button>
-  )
+  );
 }
 
 function SendBtn({ hasInput, loading, onClick }) {
@@ -52,37 +58,51 @@ function SendBtn({ hasInput, loading, onClick }) {
         cursor: hasInput ? "pointer" : "default",
       }}
     >
-      {hasInput
-        ? <ArrowRight className="h-4 w-4 text-white" />
-        : <AudioLines className="h-4 w-4 text-white/70" />}
+      {hasInput ? (
+        <ArrowRight className="h-4 w-4 text-white" />
+      ) : (
+        <AudioLines className="h-4 w-4 text-white/70" />
+      )}
     </button>
-  )
+  );
 }
 
 function ChatInputBox() {
-  const [userSearchInput, setUserSearchInput] = useState("")
-  const [activeTask, setActiveTask]           = useState("SEARCH")
-  const [loading, setLoading]                 = useState(false)
- const { usage } = useUsage()
-  const router               = useRouter()
-  const [, startTransition]  = useTransition()
-  const { setPendingSearch } = useSearchStore()
+  const [userSearchInput, setUserSearchInput] = useState("");
+  const [activeTask, setActiveTask] = useState("SEARCH");
+  const [loading, setLoading] = useState(false);
+  const { usage } = useUsage();
+  const tokenWarning = useTokenWarning(userSearchInput, usage);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const { setPendingSearch } = useSearchStore();
+
+  const borderColorClass = {
+    ok: "border-gray-200",
+    warning: "border-amber-400",
+    danger: "border-red-400",
+    blocked: "border-red-500",
+  }[tokenWarning.status];
 
   const onSearchQuery = () => {
-    const trimmed = userSearchInput.trim()
-    if (!trimmed) return
-    setLoading(true)
-    const libId = uuidv4()
-    setPendingSearch(trimmed, searchTypeMap[activeTask] ?? "search")
-    startTransition(() => { router.push(`/search/${libId}`) })
-  }
+    const trimmed = userSearchInput.trim();
+    if (!trimmed || tokenWarning.status === "blocked") return;
+    setLoading(true);
+    const libId = uuidv4();
+    setPendingSearch(trimmed, searchTypeMap[activeTask] ?? "search");
+    startTransition(() => {
+      router.push(`/search/${libId}`);
+    });
+  };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSearchQuery() }
-  }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSearchQuery();
+    }
+  };
 
-  const hasInput = userSearchInput.trim().length > 0
-
+  const hasInput = userSearchInput.trim().length > 0;
 
   return (
     <div className="flex flex-col items-center min-h-screen justify-center px-3 sm:px-4">
@@ -96,17 +116,40 @@ function ChatInputBox() {
         priority
       />
 
-      <div className="p-3 sm:p-5 w-full max-w-2xl border border-gray-200 rounded-2xl mt-6 sm:mt-10 overflow-visible">
+      <div
+        className={`p-3 sm:p-5 w-full max-w-2xl border rounded-2xl mt-6 sm:mt-10 overflow-visible transition-colors duration-300 ${borderColorClass}`}
+      >
         <input
           type="text"
           value={userSearchInput}
-          placeholder={activeTask === "RESEARCH" ? "Research anything…" : "Ask anything…"}
+          placeholder={
+            activeTask === "RESEARCH" ? "Research anything…" : "Ask anything…"
+          }
           onChange={(e) => setUserSearchInput(e.target.value)}
           onKeyDown={handleKeyDown}
           className="w-full text-base sm:text-xl px-1 py-1 pb-3 outline-none bg-transparent"
         />
 
         <div className="h-px bg-gray-100 mb-3" />
+        {hasInput && (
+          <div
+            className={`text-xs px-1 mb-2 transition-colors duration-300 ${
+              tokenWarning.status === "blocked"
+                ? "text-red-500"
+                : tokenWarning.status === "danger"
+                  ? "text-red-400"
+                  : tokenWarning.status === "warning"
+                    ? "text-amber-600"
+                    : "text-gray-400"
+            }`}
+          >
+            {tokenWarning.status === "blocked"
+              ? "You're out of tokens for today — this won't send until your quota resets."
+              : tokenWarning.status !== "ok"
+                ? `Heads up — this uses ~${tokenWarning.estimated} of your ${tokenWarning.remaining} remaining tokens.`
+                : `~${tokenWarning.estimated} tokens`}
+          </div>
+        )}
 
         {/* Desktop toolbar */}
         <div className="hidden sm:flex items-center justify-between gap-2">
@@ -118,9 +161,17 @@ function ChatInputBox() {
           <div className="flex items-center gap-0.5 shrink-0">
             <UsageBadge usage={usage} />
             <div className="w-px h-4 bg-gray-200 mx-1.5 shrink-0" aria-hidden />
-            <IconBtn label="Attach file"><Paperclip className="h-4 w-4" /></IconBtn>
-            <IconBtn label="Voice input"><Mic className="h-4 w-4" /></IconBtn>
-            <SendBtn hasInput={hasInput} loading={loading} onClick={onSearchQuery} />
+            <IconBtn label="Attach file">
+              <Paperclip className="h-4 w-4" />
+            </IconBtn>
+            <IconBtn label="Voice input">
+              <Mic className="h-4 w-4" />
+            </IconBtn>
+            <SendBtn
+              hasInput={hasInput}
+              loading={loading}
+              onClick={onSearchQuery}
+            />
           </div>
         </div>
 
@@ -134,15 +185,23 @@ function ChatInputBox() {
           <div className="flex items-center justify-between">
             <UsageBadge usage={usage} mobileCompact />
             <div className="flex items-center gap-1">
-              <IconBtn label="Attach file"><Paperclip className="h-4 w-4" /></IconBtn>
-              <IconBtn label="Voice input"><Mic className="h-4 w-4" /></IconBtn>
-              <SendBtn hasInput={hasInput} loading={loading} onClick={onSearchQuery} />
+              <IconBtn label="Attach file">
+                <Paperclip className="h-4 w-4" />
+              </IconBtn>
+              <IconBtn label="Voice input">
+                <Mic className="h-4 w-4" />
+              </IconBtn>
+              <SendBtn
+                hasInput={hasInput}
+                loading={loading}
+                onClick={onSearchQuery}
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default ChatInputBox
+export default ChatInputBox;
