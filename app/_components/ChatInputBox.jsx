@@ -13,7 +13,7 @@ import { ModelSelect } from "./ModelSelect"
 import { UsageBadge } from "./UsageBadge"
 import { useUsage } from "@/app/context/UsageContext"
 import { useTokenWarning } from "@/hooks/useTokenWarning"
-import { getStatusBorderClass } from "@/lib/tokenWarning"
+import { getStatusBorderClass } from "@/lib/Usageutils"
 import { TokenWarningBanner } from "./ui/TokenWarningBanner"
 
 

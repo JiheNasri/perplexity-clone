@@ -1,14 +1,11 @@
 // components/ui/TokenWarningBanner.jsx
+import { STATUS_TEXT_CLASS } from "@/lib/Usageutils"   // ← no more inline COLOR map
 
-const COLOR = {
-  blocked: "text-red-500",
-  danger:  "text-red-400",
-  warning: "text-amber-600",
-  ok:      "text-gray-400",
-}
-
+/**
+ * Live token estimator banner — shown while the user is typing.
+ * Only renders for authenticated users (they're the only ones with a quota).
+ */
 export function TokenWarningBanner({ warning, show, isAuthenticated, className = "" }) {
-  // Guests have no quota — nothing to show them
   if (!show || !isAuthenticated) return null
 
   let text
@@ -21,7 +18,7 @@ export function TokenWarningBanner({ warning, show, isAuthenticated, className =
   }
 
   return (
-    <p className={`text-xs px-1 transition-colors duration-300 ${COLOR[warning.status]} ${className}`}>
+    <p className={`text-xs px-1 transition-colors duration-300 ${STATUS_TEXT_CLASS[warning.status]} ${className}`}>
       {text}
     </p>
   )
